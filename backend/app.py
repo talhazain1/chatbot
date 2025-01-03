@@ -2,9 +2,11 @@ from flask import Flask, request, jsonify
 from redis_manager import RedisManager
 from openai_manager import OpenAIManager
 from maps_manager import MapsManager
+from flask_cors import CORS
 import uuid  
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "https://chatbot-mygoodmovers.streamlit.app"}})
 
 redis_manager = RedisManager()
 openai_manager = OpenAIManager()
@@ -77,4 +79,4 @@ def calculate_distance():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
