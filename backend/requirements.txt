@@ -1,0 +1,6 @@
+flask
+redis
+googlemaps
+openai
+streamlit
+numpy
