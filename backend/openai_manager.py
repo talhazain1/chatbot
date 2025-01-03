@@ -14,7 +14,7 @@ class OpenAIManager:
         Fetch a response from OpenAI GPT for general queries.
         """
         try:
-            response = openai.chat.completions.create(
+            response = openai.ChatCompletion.create(
                 model="gpt-4o-mini",  # Use the correct model available for your API plan
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant. Provide summarize responses to user queries. Also you have to provide the best possible solution to the user. And try to stay on topic that we are a moving company. And try to convince the user to take our services."},
@@ -24,7 +24,7 @@ class OpenAIManager:
                 temperature=0.7
             )
             # Extract and return the assistant's reply
-            return response.choices[0].message.content.strip()
+            return response["choices"][0]["message"]["content"].strip()
         except openai.AuthenticationError:
             return "Error: Invalid API key. Please check your OpenAI API key."
         except openai.BadRequestError as e:
