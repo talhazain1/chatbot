@@ -26,7 +26,7 @@ if "general_response" not in st.session_state:
     st.session_state["general_response"] = None  # Store response for general queries
 
 # Define the API URL
-api_url = "http://127.0.0.1:5000"
+api_url = "https://3c03-39-37-133-73.ngrok-free.app"
 
 # Set Streamlit page configuration
 st.set_page_config(page_title="Chatbot - Move Planner", page_icon="🤖", layout="wide")
