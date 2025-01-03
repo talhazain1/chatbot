@@ -1,10 +1,13 @@
 import googlemaps
 from datetime import datetime
 from config import Config
+from dotenv import load_dotenv
+import os
+
 
 class MapsManager:
     def __init__(self):
-        self.client = googlemaps.Client(key=Config.GOOGLE_MAPS_API_KEY)
+        self.client = googlemaps.Client(key=os.getenv("GOOGLE_MAPS_API_KEY"))
         self.base_rate_per_mile = 1.50
         self.move_size_rates = {
             "studio": 0.50 * 400,
