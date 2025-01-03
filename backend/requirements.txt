@@ -4,3 +4,4 @@ googlemaps
 openai
 streamlit
 numpy
+python-dotenv
