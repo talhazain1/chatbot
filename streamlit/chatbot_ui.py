@@ -3,6 +3,8 @@ import requests
 import uuid
 from datetime import datetime
 import re
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Initialize session state keys if not already present
 if "chat_id" not in st.session_state:
@@ -10,7 +12,7 @@ if "chat_id" not in st.session_state:
 if "conversation_step" not in st.session_state:
     st.session_state["conversation_step"] = 0  # Track the step in the move-related conversation
 if "query_type" not in st.session_state:
-    st.session_state["query_type"] = None  # Identify if it's a move-related or general query
+    st.session_state["query_type"] = None  # Identify if it's a move-related, FAQ, or general query
 if "move_details" not in st.session_state:
     st.session_state["move_details"] = {
         "origin": None,
@@ -73,6 +75,33 @@ def fetch_distance(origin, destination):
         st.error(f"Error fetching distance: {e}")
         return None
 
+# TF-IDF-based query classification
+def classify_query_with_tfidf(user_query, move_intents, faq_intents, threshold=0.2):
+    """
+    Classify the query as move-related, FAQ, or general using TF-IDF.
+    """
+    # Combine all intents and the user query
+    all_texts = move_intents + faq_intents + [user_query]
+
+    # Generate TF-IDF vectors
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform(all_texts)
+
+    # Calculate cosine similarity for the user query
+    similarities = cosine_similarity(tfidf_matrix[-1:], tfidf_matrix[:-1]).flatten()
+
+    # Determine category based on similarity
+    max_similarity = max(similarities)
+    if max_similarity > threshold:
+        move_similarity = max(similarities[:len(move_intents)])
+        faq_similarity = max(similarities[len(move_intents):len(move_intents) + len(faq_intents)])
+
+        if move_similarity > faq_similarity:
+            return "move"
+        else:
+            return "faq"
+    return "general"
+
 # Reset button for testing
 if st.button("Home"):
     reset_conversation()
@@ -84,50 +113,65 @@ if st.session_state["conversation_step"] == 0:
     user_query = st.text_input("Your query:")
     if st.button("Submit Query"):
         if user_query.strip():
-            # Classify query
-            move_keywords = ["move", "relocation", "transfer", "moving", "from", "to"]
-            if any(keyword in user_query.lower() for keyword in move_keywords):
-                st.session_state["query_type"] = "move"
-                # Extract locations from the query
+            # Predefined intents
+            move_intents = [
+                "I’m moving from X to Y",
+                "Can you estimate the cost of my move?",
+                "How far is my destination?",
+                "Can you help me relocate?",
+                "I need a mover for my transfer",
+                "What’s the cost for a long-distance move?"
+            ]
+            faq_intents = [
+                "What is My Good Movers?",
+                "How does My Good Movers work?",
+                "Can I trust the movers listed on your platform?",
+                "What are your guarantees for quality service?"
+            ]
+
+            # Classify query using TF-IDF
+            query_type = classify_query_with_tfidf(user_query, move_intents, faq_intents)
+            st.session_state["query_type"] = query_type
+
+            # Handle query based on classification
+            if query_type == "move":
+                # Handle move-related queries
                 origin, destination = parse_locations(user_query)
                 if origin:
                     st.session_state["move_details"]["origin"] = origin
                 if destination:
                     st.session_state["move_details"]["destination"] = destination
 
-                # If both origin and destination are provided, calculate distance
                 if origin and destination:
                     distance = fetch_distance(origin, destination)
                     if distance:
                         st.session_state["move_details"]["distance"] = distance
                         st.success(f"The distance between {origin} and {destination} is {distance} miles.")
-                    st.session_state["conversation_step"] = 3  # Proceed to the next step
+                    st.session_state["conversation_step"] = 3  # Proceed
                 elif not st.session_state["move_details"]["origin"]:
                     st.session_state["conversation_step"] = 1  # Ask for origin
                 elif not st.session_state["move_details"]["destination"]:
                     st.session_state["conversation_step"] = 2  # Ask for destination
-            else:
-                # Check for FAQ-related queries
-                try:
-                    payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
-                    response = requests.post(f"{api_url}/faq_query", json=payload)
-                    response.raise_for_status()
-                    data = response.json()
-                    faq_response = data.get("reply", None)
 
-                    if faq_response:
-                        st.session_state["query_type"] = "faq"
-                        st.session_state["faq_response"] = faq_response
-                    else:
-                        st.session_state["query_type"] = "general"
-                        # Fetch GPT response for general query
-                        payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
-                        response = requests.post(f"{api_url}/general_query", json=payload)
-                        response.raise_for_status()
-                        data = response.json()
-                        st.session_state["general_response"] = data.get("reply", "No response available.")
-                except requests.exceptions.RequestException as e:
-                    st.session_state["general_response"] = f"Error fetching general response: {e}"
+            elif query_type == "faq":
+                # Handle FAQ queries
+                payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
+                response = requests.post(f"{api_url}/faq_query", json=payload)
+                response.raise_for_status()
+                data = response.json()
+                faq_response = data.get("reply", None)
+                st.write("**Bot:** Here's the information you're looking for:")
+                st.write(faq_response)
+
+            elif query_type == "general":
+                # Handle general queries
+                payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
+                response = requests.post(f"{api_url}/general_query", json=payload)
+                response.raise_for_status()
+                data = response.json()
+                general_response = data.get("reply", "No response available.")
+                st.write("**Bot:** Here's what I found:")
+                st.write(general_response)
 
 # Handle FAQ Query
 if st.session_state["query_type"] == "faq":
