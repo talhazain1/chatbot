@@ -1,8 +1,8 @@
+streamlit==1.18.1
+scikit-learn==1.2.2
+numpy
+requests
 flask
 redis
 googlemaps
-openai
-streamlit
-numpy
 python-dotenv
-scikit-learn==1.2.2
