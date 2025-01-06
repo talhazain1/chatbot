@@ -3,8 +3,6 @@ import requests
 import uuid
 from datetime import datetime
 import re
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
 # Initialize session state keys if not already present
 if "chat_id" not in st.session_state:
@@ -75,31 +73,34 @@ def fetch_distance(origin, destination):
         st.error(f"Error fetching distance: {e}")
         return None
 
-# TF-IDF-based query classification
-def classify_query_with_tfidf(user_query, move_intents, faq_intents, threshold=0.2):
+def classify_query(user_query):
     """
-    Classify the query as move-related, FAQ, or general using TF-IDF.
+    Classify the query into move-related, FAQ, or general using pattern matching.
     """
-    # Combine all intents and the user query
-    all_texts = move_intents + faq_intents + [user_query]
 
-    # Generate TF-IDF vectors
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform(all_texts)
+    # Patterns for move-related queries
+    move_patterns = [
+        r"\bmove\b", r"\brelocation\b", r"\btransfer\b", r"\bfrom\b.*\bto\b",
+        r"\bestimate\b", r"\bhow far\b", r"\bcost\b"
+    ]
 
-    # Calculate cosine similarity for the user query
-    similarities = cosine_similarity(tfidf_matrix[-1:], tfidf_matrix[:-1]).flatten()
+    # Patterns for FAQ-related queries
+    faq_patterns = [
+        r"\breviews\b", r"\bhow does\b", r"\btrust\b", r"\bservices\b",
+        r"\bguarantee\b", r"\bplatform\b", r"\bfaq\b", r"\bverify\b"
+    ]
 
-    # Determine category based on similarity
-    max_similarity = max(similarities)
-    if max_similarity > threshold:
-        move_similarity = max(similarities[:len(move_intents)])
-        faq_similarity = max(similarities[len(move_intents):len(move_intents) + len(faq_intents)])
-
-        if move_similarity > faq_similarity:
+    # Check if the query matches any move-related patterns
+    for pattern in move_patterns:
+        if re.search(pattern, user_query, re.IGNORECASE):
             return "move"
-        else:
+
+    # Check if the query matches any FAQ-related patterns
+    for pattern in faq_patterns:
+        if re.search(pattern, user_query, re.IGNORECASE):
             return "faq"
+
+    # Default to general query
     return "general"
 
 # Reset button for testing
@@ -113,24 +114,8 @@ if st.session_state["conversation_step"] == 0:
     user_query = st.text_input("Your query:")
     if st.button("Submit Query"):
         if user_query.strip():
-            # Predefined intents
-            move_intents = [
-                "I’m moving from X to Y",
-                "Can you estimate the cost of my move?",
-                "How far is my destination?",
-                "Can you help me relocate?",
-                "I need a mover for my transfer",
-                "What’s the cost for a long-distance move?"
-            ]
-            faq_intents = [
-                "What is My Good Movers?",
-                "How does My Good Movers work?",
-                "Can I trust the movers listed on your platform?",
-                "What are your guarantees for quality service?"
-            ]
-
-            # Classify query using TF-IDF
-            query_type = classify_query_with_tfidf(user_query, move_intents, faq_intents)
+            # Classify query
+            query_type = classify_query(user_query)
             st.session_state["query_type"] = query_type
 
             # Handle query based on classification
@@ -174,13 +159,13 @@ if st.session_state["conversation_step"] == 0:
                 st.write(general_response)
 
 # Handle FAQ Query
-if st.session_state["query_type"] == "faq":
-    st.write("**Bot:** Here's the information you're looking for:")
-    st.write(st.session_state["faq_response"])
-# Handle General Query
-if st.session_state["query_type"] == "general":
-    st.write("**Bot:** Here’s what I found:")
-    st.write(st.session_state["general_response"])
+# if st.session_state["query_type"] == "faq":
+#     st.write("**Bot:** Here's the information you're looking for:")
+#     st.write(st.session_state["faq_response"])
+# # Handle General Query
+# if st.session_state["query_type"] == "general":
+#     st.write("**Bot:** Here’s what I found:")
+#     st.write(st.session_state["general_response"])
 
 # Handle Move-Related Query
 elif st.session_state["query_type"] == "move":
