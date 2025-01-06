@@ -1,8 +1,0 @@
-flask
-redis
-googlemaps
-openai
-streamlit
-numpy
-python-dotenv
-scikit-learn==1.2.2
