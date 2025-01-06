@@ -24,6 +24,8 @@ if "move_details" not in st.session_state:
     }
 if "general_response" not in st.session_state:
     st.session_state["general_response"] = None  # Store response for general queries
+if "faq_response" not in st.session_state:
+    st.session_state["faq_response"] = None  # Store response for FAQ queries
 
 # Define the API URL
 api_url = "https://3c03-39-37-133-73.ngrok-free.app"
@@ -47,6 +49,7 @@ def reset_conversation():
         "additional_services": []
     }
     st.session_state["general_response"] = None
+    st.session_state["faq_response"] = None
 
 # Helper function to parse locations from a query
 def parse_locations(query):
@@ -104,17 +107,32 @@ if st.session_state["conversation_step"] == 0:
                 elif not st.session_state["move_details"]["destination"]:
                     st.session_state["conversation_step"] = 2  # Ask for destination
             else:
-                st.session_state["query_type"] = "general"
-                # Fetch GPT response for general query
+                # Check for FAQ-related queries
                 try:
                     payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
-                    response = requests.post(f"{api_url}/general_query", json=payload)
+                    response = requests.post(f"{api_url}/faq_query", json=payload)
                     response.raise_for_status()
                     data = response.json()
-                    st.session_state["general_response"] = data.get("reply", "No response available.")
+                    faq_response = data.get("reply", None)
+
+                    if faq_response:
+                        st.session_state["query_type"] = "faq"
+                        st.session_state["faq_response"] = faq_response
+                    else:
+                        st.session_state["query_type"] = "general"
+                        # Fetch GPT response for general query
+                        payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
+                        response = requests.post(f"{api_url}/general_query", json=payload)
+                        response.raise_for_status()
+                        data = response.json()
+                        st.session_state["general_response"] = data.get("reply", "No response available.")
                 except requests.exceptions.RequestException as e:
                     st.session_state["general_response"] = f"Error fetching general response: {e}"
 
+# Handle FAQ Query
+if st.session_state["query_type"] == "faq":
+    st.write("**Bot:** Here's the information you're looking for:")
+    st.write(st.session_state["faq_response"])
 # Handle General Query
 if st.session_state["query_type"] == "general":
     st.write("**Bot:** Here’s what I found:")
