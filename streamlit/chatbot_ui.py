@@ -3,8 +3,8 @@ import requests
 import uuid
 from datetime import datetime
 import re
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+#from sklearn.feature_extraction.text import TfidfVectorizer
+#from sklearn.metrics.pairwise import cosine_similarity
 
 # Initialize session state keys if not already present
 if "chat_id" not in st.session_state:
