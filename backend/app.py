@@ -60,6 +60,23 @@ def estimate_cost():
     redis_manager.store_move_details(chat_id, move_details, estimated_cost)
 
     return jsonify({"estimated_cost": estimated_cost})
+from faq_manager import FAQManager
+
+faq_manager = FAQManager()
+faq_manager.load_faqs("/backend/data/faqs.jsonl")  # Replace with your dataset path
+
+@app.route("/faq_query", methods=["POST"])
+def faq_query():
+    data = request.json
+    user_question = data.get("message", "")
+
+    if not user_question:
+        return jsonify({"error": "No question provided"}), 400
+
+    # Find the best match
+    answer = faq_manager.find_best_match(user_question)
+    return jsonify({"reply": answer})
+
 @app.route("/calculate_distance", methods=["POST"])
 def calculate_distance():
     data = request.json
