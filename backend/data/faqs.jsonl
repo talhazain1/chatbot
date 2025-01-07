@@ -1,9 +1,9 @@
-{"question": "What is the cost of moving a 1 bed apartment?", "completion": "The cost depends on the distance and size. Please provide details for an estimate."}
-{"question": "How long does it take to move?", "completion": "It depends on the distance and the size of the move, but typically ranges from 1 to 6 hours."}
-{"question": "What is included in the moving service?", "completion": "The service includes loading, transportation, and unloading. Additional services like packing can be added."}
-{"question": "What is the diesel price in Texas?", "completion": "The current diesel price in Texas is approximately $3.50 per gallon."}
-{"question": "What is My Good Movers?", "completion": "My Good Movers is a moving company that provides local and long-distance moving services."}
-{"question": "How can I contact My Good Movers?", "completion": "You can contact My Good Movers by phone at (123) 456-7890 or by email at[info@mygoodmovers.com](mailto:info@mygoodmovers.com)."}
+{"question": "What is the cost of moving a 1 bed apartment?", "answer": "The cost depends on the distance and size. Please provide details for an estimate."}
+{"question": "How long does it take to move?", "answer": "It depends on the distance and the size of the move, but typically ranges from 1 to 6 hours."}
+{"question": "What is included in the moving service?", "answer": "The service includes loading, transportation, and unloading. Additional services like packing can be added."}
+{"question": "What is the diesel price in Texas?", "answer": "The current diesel price in Texas is approximately $3.50 per gallon."}
+{"question": "What is My Good Movers?", "answer": "My Good Movers is a moving company that provides local and long-distance moving services."}
+{"question": "How can I contact My Good Movers?", "answer": "You can contact My Good Movers by phone at (123) 456-7890 or by email at[info@mygoodmovers.com](mailto:info@mygoodmovers.com)."}
 {"question": "What is My Good Movers?", "answer": "My Good Movers is a platform that connects customers with professional and reliable moving services tailored to their needs."}
 {"question": "How does My Good Movers work?", "answer": "Customers can search for movers, compare services, read reviews, and book moving services directly through our platform."}
 {"question": "Can I trust the movers listed on your platform?", "answer": "Yes, all movers listed on our platform go through a thorough vetting process to ensure quality and reliability."}
@@ -85,4 +85,16 @@
 {"question": "Can I book movers for commercial or office moves?", "answer": "Yes, our platform supports both residential and commercial moves. Use the filters to find movers specializing in office relocations."}
 {"question": "How do I tip movers after the job is complete?", "answer": "Many movers accept tips in cash or through online payment options. Some even allow tipping directly through our platform."}
 {"question": "Can I reschedule my move after booking?", "answer": "Yes, rescheduling is allowed based on the mover's policy. Contact the mover or our support team for assistance."}
-
+{"question": "What’s your policy if my furniture is damaged during the move?", "answer": "Most of our movers provide insurance of varying coverage levels. You can contact the mover for your claim."}
+{"question": "Can I book movers for a last-minute move?", "answer": "Yes, some movers offer same-day or last-minute booking options. Check their availability on our platform."}
+{"question": "How do I know if a mover is available on my preferred moving date?", "answer": "Check the mover's availability calendar on their profile or contact them directly for confirmation."}
+{"question": "Can I book movers for a partial move (e.g., only furniture)?", "answer": "Yes, you can customize your move by selecting specific services like furniture moving, packing, or storage."}
+{"question": "What if I need to cancel my move due to unforeseen circumstances?", "answer": "Contact the mover immediately to discuss your situation. They will guide you through the cancellation process."}
+{"question": "Can I book movers for a cross-country move?", "answer": "Yes, many movers on our platform specialize in long-distance and cross-country moves. Use the filters to find suitable options."}
+{"question": "How do I know if a mover is licensed and insured?", "answer": "Movers are required to display their licenses and insurance details on their profiles. You can also verify this information with the mover directly."}
+{"question": "Can I book movers for a DIY move (e.g., just the truck)?", "answer": "Yes, some movers offer truck rental services for DIY moves. Check their profiles for available options."}
+{"question": "What if I need to store my items temporarily during the move?", "answer": "Many movers offer storage solutions for short-term or long-term needs. Discuss your storage requirements with the mover during booking."}
+{"question": "Can I book movers for a multi-day move?", "answer": "Yes, you can book movers for multi-day moves based on your requirements. Discuss the details with the mover during booking."}
+{"question": "How do I know if a mover offers packing services?", "answer": "Movers who offer packing services will mention it on their profiles. You can also inquire about packing options during booking."}
+{"question": "Can I book movers for a small move (e.g., a few items)?", "answer": "Yes, many movers offer small move services for customers with minimal items. Check their profiles for details."}
+{"question": "What if I need to change my moving date after booking?", "answer": "Contactthe mover to discuss your new moving date. They will guide you through the process and any associated fees"}
