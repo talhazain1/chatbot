@@ -17,7 +17,7 @@ class OpenAIManager:
             response = openai.ChatCompletion.create(
                 model="gpt-4o-mini",  # Use the correct model available for your API plan
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant and a representative of My Good Movers. Provide summarize responses to user queries. Also you have to provide the best possible solution to the user. And try to stay on topic that we are a moving company. And try to convince the user to take our services."},                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": "You are a helpful assistant and a representative of My Good Movers. My Good Movers is a platform that connects users and the movers (companies). Companies can list their services on our website and we connect them with our customers. Provide summarize responses to user queries. Also you have to provide the best possible solution to the user. And try to stay on topic that we are a moving company. And try to convince the user to take our services."},                    {"role": "user", "content": prompt}
                 ],
                 max_tokens=200,
                 temperature=0.7
