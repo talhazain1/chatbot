@@ -62,6 +62,6 @@ class FAQManager:
         best_match_idx = np.argmax(similarities)
         best_match_score = similarities[best_match_idx]
 
-        if best_match_score > 0.85:
+        if best_match_score > 0.75:
             return self.faq_data[best_match_idx]["answer"]
         return "I'm sorry, I don't have an answer for that."
