@@ -86,10 +86,26 @@ def classify_query(user_query):
 
     # Patterns for FAQ-related queries
     faq_patterns = [
-        r"\breviews\b", r"\bhow does\b", r"\btrust\b", r"\bservices\b",
-        r"\bguarantee\b", r"\bplatform\b", r"\bfaq\b", r"\bverify\b"
-    ]
+    # Platform-related patterns
+    r"\breviews\b", r"\bratings\b", r"\bprofile\b", r"\blist\b",
+    r"\badvertising\b", r"\bcontact\b", r"\baccount\b", r"\bpayment\b",
 
+    # Information request patterns
+    r"\bhow\b", r"\bwhat\b", r"\bwhy\b", r"\bcan I\b", r"\bdo you\b",
+    r"\bdetails\b", r"\bhelp\b", r"\bassist\b", r"\boffer\b",
+
+    # Movers and safety patterns
+    r"\bmovers\b", r"\binsurance\b", r"\bguarantees\b", r"\bdamaged\b",
+    r"\btrustworthy\b", r"\bverify\b", r"\bsafe\b",
+
+    # Technical issues and troubleshooting
+    r"\bissue\b", r"\bproblem\b", r"\bnot working\b", r"\brefund\b",
+    r"\blogin\b", r"\breset\b", r"\btrouble\b", r"\breport\b",
+
+    # Policies and procedures
+    r"\bpolicy\b", r"\brules\b", r"\bterms\b", r"\bconditions\b",
+    r"\brefund\b", r"\bmodification\b", r"\bcancel\b", r"\bschedule\b"
+    ]
     # Check if the query matches any move-related patterns
     for pattern in move_patterns:
         if re.search(pattern, user_query, re.IGNORECASE):
