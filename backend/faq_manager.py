@@ -46,22 +46,24 @@ class FAQManager:
         return np.array(response["data"][0]["embedding"])
 
     def find_best_match(self, user_question):
-        """
-        Find the most similar FAQ question to the user's query.
-        """
         user_embedding = self.get_embedding(user_question)
-        faq_embeddings = np.stack(self.embeddings)
-        dot_products = np.dot(faq_embeddings, user_embedding.T).flatten()
-        norms = np.linalg.norm(faq_embeddings, axis=1) * np.linalg.norm(user_embedding)
-        similarities = dot_products / norms
 
-        # Debug: Log similarity scores
-        print(f"User Question: {user_question}")
+        similarities = [
+            np.dot(user_embedding, faq_embedding) /
+            (np.linalg.norm(user_embedding) * np.linalg.norm(faq_embedding))
+            for faq_embedding in self.embeddings
+        ]
 
-        # Find the best match
         best_match_idx = np.argmax(similarities)
         best_match_score = similarities[best_match_idx]
 
-        if best_match_score > 0.75:
+        threshold = 0.75
+        if best_match_score > threshold:
             return self.faq_data[best_match_idx]["answer"]
-        return "I'm sorry, I don't have an answer for that."
+
+        # Fallback
+        return "I'm sorry, I couldn't find an exact match. Could you provide more details?"
+
+        # Fallback to general query if no good match
+        # return None
+    
