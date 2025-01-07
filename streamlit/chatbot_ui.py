@@ -170,6 +170,7 @@ if st.session_state["conversation_step"] == 0:
 # Handle Move-Related Query
 elif st.session_state["query_type"] == "move":
     if st.session_state["conversation_step"] == 1:
+        st.write("**Bot:** Please share the details so that I can process your query:")
         st.write("**Bot:** Where are you moving from?")
         origin = st.text_input("Enter your starting location:")
         if st.button("Next"):
