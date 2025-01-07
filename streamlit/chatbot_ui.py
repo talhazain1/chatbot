@@ -163,8 +163,8 @@ if st.session_state["conversation_step"] == 0:
 #     st.write("**Bot:** Here's the information you're looking for:")
 #     st.write(st.session_state["faq_response"])
 # # Handle General Query
-# if st.session_state["query_type"] == "general":
-#     st.write("**Bot:** Here’s what I found:")
+if st.session_state["query_type"] == "move":
+    st.write("**Bot:** Please share the details so that I can process your query:")
 #     st.write(st.session_state["general_response"])
 
 # Handle Move-Related Query
