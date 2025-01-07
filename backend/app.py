@@ -8,7 +8,6 @@ import uuid
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://chatbot-mygoodmovers.streamlit.app"}})
-
 redis_manager = RedisManager()
 openai_manager = OpenAIManager()
 maps_manager = MapsManager()
@@ -63,7 +62,7 @@ def estimate_cost():
     return jsonify({"estimated_cost": estimated_cost})
 
 faq_manager = FAQManager()
-faq_manager.load_faqs("/backend/data/faqs.jsonl")  # Replace with your dataset path
+faq_manager.load_faqs("/Users/TalhaZain/chatbot/backend/data/faqs.jsonl")  # Replace with your dataset path
 
 @app.route("/faq_query", methods=["POST"])
 def faq_query():
@@ -79,6 +78,7 @@ def faq_query():
     answer = faq_manager.find_best_match(user_question)
     print(f"FAQ Answer: {answer}")  # Debugging
     return jsonify({"reply": answer})
+
 
 @app.route("/calculate_distance", methods=["POST"])
 def calculate_distance():
@@ -100,3 +100,4 @@ def calculate_distance():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
