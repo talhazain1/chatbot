@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from redis_manager import RedisManager
 from openai_manager import OpenAIManager
 from maps_manager import MapsManager
+from faq_manager import FAQManager
 from flask_cors import CORS
 import uuid  
 
@@ -60,7 +61,6 @@ def estimate_cost():
     redis_manager.store_move_details(chat_id, move_details, estimated_cost)
 
     return jsonify({"estimated_cost": estimated_cost})
-from faq_manager import FAQManager
 
 faq_manager = FAQManager()
 faq_manager.load_faqs("/backend/data/faqs.jsonl")  # Replace with your dataset path
@@ -73,8 +73,11 @@ def faq_query():
     if not user_question:
         return jsonify({"error": "No question provided"}), 400
 
+    print(f"Received FAQ Query: {user_question}")  # Debugging
+
     # Find the best match
     answer = faq_manager.find_best_match(user_question)
+    print(f"FAQ Answer: {answer}")  # Debugging
     return jsonify({"reply": answer})
 
 @app.route("/calculate_distance", methods=["POST"])
