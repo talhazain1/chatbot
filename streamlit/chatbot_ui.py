@@ -77,7 +77,7 @@ def classify_query(user_query):
     """
     Classify the query into move-related, FAQ, or general using pattern matching.
     """
-
+    normalized_query = user_query.lower().strip()
     # Patterns for move-related queries
     move_patterns = [
         r"\bmove\b", r"\brelocation\b", r"\btransfer\b", r"\bfrom\b.*\bto\b",
@@ -105,19 +105,27 @@ def classify_query(user_query):
     # Policies and procedures
     r"\bpolicy\b", r"\brules\b", r"\bterms\b", r"\bconditions\b",
     r"\brefund\b", r"\bmodification\b", r"\bcancel\b", r"\bschedule\b"
-    ]
-    # Check if the query matches any move-related patterns
-    for pattern in move_patterns:
-        if re.search(pattern, user_query, re.IGNORECASE):
-            return "move"
+]
 
-    # Check if the query matches any FAQ-related patterns
-    for pattern in faq_patterns:
-        if re.search(pattern, user_query, re.IGNORECASE):
-            return "faq"
 
-    # Default to general query
-    return "general"
+    move_matches = [pattern for pattern in move_patterns if re.search(pattern, normalized_query, re.IGNORECASE)]
+
+        # Match against FAQ-related patterns
+    faq_matches = [pattern for pattern in faq_patterns if re.search(pattern, normalized_query, re.IGNORECASE)]
+
+        # Debugging: Log matching patterns
+    print(f"Move Matches: {move_matches}")
+    print(f"FAQ Matches: {faq_matches}")
+
+        # Prioritize FAQ if both categories match
+    if faq_matches:
+        return "faq"
+
+    if move_matches:
+        return "move"
+    else:
+        # Default to general query
+        return "general"
 
 # Reset button for testing
 if st.button("Home"):
@@ -142,7 +150,6 @@ if st.session_state["conversation_step"] == 0:
                     st.session_state["move_details"]["origin"] = origin
                 if destination:
                     st.session_state["move_details"]["destination"] = destination
-
                 if origin and destination:
                     distance = fetch_distance(origin, destination)
                     if distance:
@@ -158,6 +165,7 @@ if st.session_state["conversation_step"] == 0:
                 # Handle FAQ queries
                 payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
                 response = requests.post(f"{api_url}/faq_query", json=payload)
+                print(f"FAQ API Response: {response.json()}")
                 response.raise_for_status()
                 data = response.json()
                 faq_response = data.get("reply", None)
@@ -180,8 +188,8 @@ if st.session_state["conversation_step"] == 0:
 #     st.write(st.session_state["faq_response"])
 # # Handle General Query
 # if st.session_state["query_type"] == "move":
-#     st.write("**Bot:** Please share the details so that I can process your query:")
-#     st.write(st.session_state["general_response"])
+#      st.write("**Bot:** Please share the details so that I can process your query:")
+    #  st.write(st.session_state["general_response"])
 
 # Handle Move-Related Query
 elif st.session_state["query_type"] == "move":
