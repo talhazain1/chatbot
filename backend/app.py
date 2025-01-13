@@ -18,12 +18,28 @@ def home():
 
 @app.route("/general_query", methods=["POST"])
 def general_query():
-    user_input = request.json.get("message", "")
-    chat_id = request.json.get("chat_id", str(uuid.uuid4()))  
-    redis_manager.init_chat(chat_id, None, None)  
-    response = openai_manager.get_general_response(user_input)
-    redis_manager.add_message(chat_id, user_input, response)
+    data = request.json
+    user_input = data.get("message", "")
+    chat_id = data.get("chat_id", str(uuid.uuid4()))
+    
+    redis_manager.init_chat(chat_id)  # Ensure the chat session is initialized
+
+    # Retrieve previous context
+    previous_context = redis_manager.get_context(chat_id, "context")
+    if previous_context:
+        combined_input = f"{previous_context}\nUser: {user_input}"
+    else:
+        combined_input = user_input
+
+    # Generate response
+    response = openai_manager.get_general_response(combined_input)
+    
+    # Update Redis with new context
+    redis_manager.update_context(chat_id, "context", f"{combined_input}\nAssistant: {response}")
+
+    redis_manager.add_message(chat_id, user_input, response)  # Save message history
     return jsonify({"reply": response})
+
 
 @app.route("/estimate_cost", methods=["POST"])
 def estimate_cost():
