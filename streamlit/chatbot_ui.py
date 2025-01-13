@@ -27,6 +27,10 @@ if "general_response" not in st.session_state:
 if "faq_response" not in st.session_state:
     st.session_state["faq_response"] = None  # Store response for FAQ queries
 
+# NEW: Maintain a chat history for follow-up/context
+if "chat_history" not in st.session_state:
+    st.session_state["chat_history"] = []
+
 # Define the API URL
 api_url = "https://3c03-39-37-133-73.ngrok-free.app"
 
@@ -50,6 +54,7 @@ def reset_conversation():
     }
     st.session_state["general_response"] = None
     st.session_state["faq_response"] = None
+    st.session_state["chat_history"] = []
 
 # Helper function to parse locations from a query
 def parse_locations(query):
@@ -86,41 +91,36 @@ def classify_query(user_query):
 
     # Patterns for FAQ-related queries
     faq_patterns = [
-    # Platform-related patterns
-    r"\breviews\b", r"\bratings\b", r"\bprofile\b", r"\blist\b",
-    r"\badvertising\b", r"\bcontact\b", r"\baccount\b", r"\bpayment\b",
+        # Platform-related patterns
+        r"\breviews\b", r"\bratings\b", r"\bprofile\b", r"\blist\b",
+        r"\badvertising\b", r"\bcontact\b", r"\baccount\b", r"\bpayment\b",
 
-    # Information request patterns
-    r"\bhow\b", r"\bwhat\b", r"\bwhy\b", r"\bcan I\b", r"\bdo you\b",
-    r"\bdetails\b", r"\bhelp\b", r"\bassist\b", r"\boffer\b",
+        # Information request patterns
+        r"\bhow\b", r"\bwhat\b", r"\bwhy\b", r"\bcan I\b", r"\bdo you\b",
+        r"\bdetails\b", r"\bhelp\b", r"\bassist\b", r"\boffer\b",
 
-    # Movers and safety patterns
-    r"\bmovers\b", r"\binsurance\b", r"\bguarantees\b", r"\bdamaged\b",
-    r"\btrustworthy\b", r"\bverify\b", r"\bsafe\b",
+        # Movers and safety patterns
+        r"\bmovers\b", r"\binsurance\b", r"\bguarantees\b", r"\bdamaged\b",
+        r"\btrustworthy\b", r"\bverify\b", r"\bsafe\b",
 
-    # Technical issues and troubleshooting
-    r"\bissue\b", r"\bproblem\b", r"\bnot working\b", r"\brefund\b",
-    r"\blogin\b", r"\breset\b", r"\btrouble\b", r"\breport\b",
+        # Technical issues and troubleshooting
+        r"\bissue\b", r"\bproblem\b", r"\bnot working\b", r"\brefund\b",
+        r"\blogin\b", r"\breset\b", r"\btrouble\b", r"\breport\b",
 
-    # Policies and procedures
-    r"\bpolicy\b", r"\brules\b", r"\bterms\b", r"\bconditions\b",
-    r"\brefund\b", r"\bmodification\b", r"\bcancel\b", r"\bschedule\b"
-]
-
+        # Policies and procedures
+        r"\bpolicy\b", r"\brules\b", r"\bterms\b", r"\bconditions\b",
+        r"\brefund\b", r"\bmodification\b", r"\bcancel\b", r"\bschedule\b"
+    ]
 
     move_matches = [pattern for pattern in move_patterns if re.search(pattern, normalized_query, re.IGNORECASE)]
-
-        # Match against FAQ-related patterns
     faq_matches = [pattern for pattern in faq_patterns if re.search(pattern, normalized_query, re.IGNORECASE)]
 
-        # Debugging: Log matching patterns
     print(f"Move Matches: {move_matches}")
     print(f"FAQ Matches: {faq_matches}")
 
-        # Prioritize FAQ if both categories match
+    # If there's any FAQ match, prioritize FAQ
     if faq_matches:
         return "faq"
-
     if move_matches:
         return "move"
     else:
@@ -131,174 +131,245 @@ def classify_query(user_query):
 if st.button("Home"):
     reset_conversation()
 
-# Step 0: Identify Query Type
+# NEW: For backwards compatibility from old code that used st.session_state["context"]
+if "context" not in st.session_state:
+    st.session_state["context"] = ""
+
+def handle_user_input():
+    user_query = st.session_state.get("query_input", "").strip()
+    if user_query:
+        # Add the user query to chat history
+        st.session_state["chat_history"].append({"sender": "user", "content": user_query})
+        
+        query_type = classify_query(user_query)
+        st.session_state["query_type"] = query_type
+
+        if query_type == "move":
+            handle_move_query(user_query)
+        elif query_type == "faq":
+            handle_faq_query(user_query)
+        else:
+            handle_general_query(user_query)
+
+def handle_general_query(user_query):
+    """
+    Handle general queries by interacting with the general_query endpoint.
+    """
+    payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
+    response = requests.post(f"{api_url}/general_query", json=payload)
+    response.raise_for_status()
+    data = response.json()
+    reply = data.get("reply", "No response available.")
+    # Store assistant's reply in chat history
+    st.session_state["chat_history"].append({"sender": "assistant", "content": reply})
+    # Display
+    st.write(f"**Bot:** {reply}")
+
+def handle_faq_query(user_query):
+    """
+    Handle FAQ queries by interacting with the faq_query endpoint.
+    """
+    payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
+    response = requests.post(f"{api_url}/faq_query", json=payload)
+    response.raise_for_status()
+    data = response.json()
+    reply = data.get("reply", "I'm sorry, I don't have an answer for that.")
+    # Store assistant's reply in chat history
+    st.session_state["chat_history"].append({"sender": "assistant", "content": reply})
+    # Display
+    st.write(f"**Bot:** {reply}")
+
+def handle_move_query(user_query):
+    """
+    Handle move-related queries by guiding the user through a multi-step process.
+    """
+    origin, destination = parse_locations(user_query)
+    if origin:
+        st.session_state["move_details"]["origin"] = origin
+    if destination:
+        st.session_state["move_details"]["destination"] = destination
+
+    if origin and destination:
+        distance = fetch_distance(origin, destination)
+        if distance:
+            st.session_state["move_details"]["distance"] = distance
+            # Store the distance message in chat_history
+            distance_msg = f"The distance between {origin} and {destination} is {distance} miles."
+            st.session_state["chat_history"].append({"sender": "assistant", "content": distance_msg})
+            st.success(distance_msg)
+        st.session_state["conversation_step"] = 3  # Proceed to move size
+    elif not st.session_state["move_details"]["origin"]:
+        st.session_state["conversation_step"] = 1  # Ask for origin
+    elif not st.session_state["move_details"]["destination"]:
+        st.session_state["conversation_step"] = 2  # Ask for destination
+
+# Display the title once at the top
+st.title("Chatbot - Move Planner 🤖")
+
+# Always display the chat history so far
+for message in st.session_state["chat_history"]:
+    if message["sender"] == "user":
+        st.write(f"**You:** {message['content']}")
+    else:
+        st.write(f"**Bot:** {message['content']}")
+
+# Step 0: Identify Query Type / Initial Interaction
 if st.session_state["conversation_step"] == 0:
-    st.title("Chatbot - Move Planner 🤖")
-    st.write("**Bot:** Hey! How may I help you?")
-    user_query = st.text_input("Your query:")
-    if st.button("Submit Query"):
-        if user_query.strip():
-            # Classify query
-            query_type = classify_query(user_query)
-            st.session_state["query_type"] = query_type
+    # Only show the greeting once at the very beginning if there's no user or bot message yet
+    if len(st.session_state["chat_history"]) == 0:
+        st.write("**Bot:** Hey! How may I help you?")
+    
+    # Text input that triggers handle_user_input when user presses Enter
+    st.text_input(
+        "Your query:",
+        key="query_input",
+        on_change=handle_user_input,
+        placeholder="Type your query here..."
+    )
 
-            # Handle query based on classification
-            if query_type == "move":
-                # Handle move-related queries
-                origin, destination = parse_locations(user_query)
-                if origin:
-                    st.session_state["move_details"]["origin"] = origin
-                if destination:
-                    st.session_state["move_details"]["destination"] = destination
-                if origin and destination:
-                    distance = fetch_distance(origin, destination)
-                    if distance:
-                        st.session_state["move_details"]["distance"] = distance
-                        st.success(f"The distance between {origin} and {destination} is {distance} miles.")
-                    st.session_state["conversation_step"] = 3  # Proceed
-                elif not st.session_state["move_details"]["origin"]:
-                    st.session_state["conversation_step"] = 1  # Ask for origin
-                elif not st.session_state["move_details"]["destination"]:
-                    st.session_state["conversation_step"] = 2  # Ask for destination
+    # Button fallback for mouse click
+    if st.button("Submit Query", key="submit_query"):
+        handle_user_input()
 
-            elif query_type == "faq":
-                # Handle FAQ queries
-                payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
-                response = requests.post(f"{api_url}/faq_query", json=payload)
-                print(f"FAQ API Response: {response.json()}")
-                response.raise_for_status()
-                data = response.json()
-                faq_response = data.get("reply", None)
-                st.write("**Bot:** Here's the information you're looking for:")
-                st.write(faq_response)
+    # (No further logic here, the steps below will handle multi-step flows.)
 
-            elif query_type == "general":
-                # Handle general queries
-                payload = {"message": user_query, "chat_id": st.session_state["chat_id"]}
-                response = requests.post(f"{api_url}/general_query", json=payload)
-                response.raise_for_status()
-                data = response.json()
-                general_response = data.get("reply", "No response available.")
-                st.write("**Bot:** Here's what I found:")
-                st.write(general_response)
+elif st.session_state["conversation_step"] == 1:
+    st.write("**Bot:** Where are you moving from?")
+    origin = st.text_input("Enter your starting location:", key="origin_input")
+    if st.button("Next", key="origin_next") or origin:
+        if origin:
+            # Save user input to chat history
+            st.session_state["chat_history"].append({"sender": "user", "content": origin})
+            st.session_state["move_details"]["origin"] = origin
+            st.session_state["conversation_step"] = 2  # Proceed to destination step
+            st.rerun()
 
-# Handle FAQ Query
-# if st.session_state["query_type"] == "faq":
-#     st.write("**Bot:** Here's the information you're looking for:")
-#     st.write(st.session_state["faq_response"])
-# # Handle General Query
-# if st.session_state["query_type"] == "move":
-#      st.write("**Bot:** Please share the details so that I can process your query:")
-    #  st.write(st.session_state["general_response"])
+        else:
+            st.error("Please provide your starting location.")
 
-# Handle Move-Related Query
-elif st.session_state["query_type"] == "move":
-    if st.session_state["conversation_step"] == 1:
-        st.write("**Bot:** Please share the details so that I can process your query:")
-        st.write("**Bot:** Where are you moving from?")
-        origin = st.text_input("Enter your starting location:")
-        if st.button("Next"):
-            if origin:
-                st.session_state["move_details"]["origin"] = origin
-                if st.session_state["move_details"]["destination"]:
-                    # Calculate distance if destination is already provided
-                    distance = fetch_distance(origin, st.session_state["move_details"]["destination"])
-                    if distance:
-                        st.session_state["move_details"]["distance"] = distance
-                        st.success(f"The distance between {origin} and {st.session_state['move_details']['destination']} is {distance} miles.")
-                st.session_state["conversation_step"] = 2  # Ask for destination
-            else:
-                st.error("Please provide your starting location.")
-    elif st.session_state["conversation_step"] == 2:
-        st.write("**Bot:** Where are you moving to?")
-        destination = st.text_input("Enter your destination:")
-        if st.button("Next"):
-            if destination:
-                st.session_state["move_details"]["destination"] = destination
-                if st.session_state["move_details"]["origin"]:
-                    # Calculate distance if origin is already provided
-                    distance = fetch_distance(st.session_state["move_details"]["origin"], destination)
-                    if distance:
-                        st.session_state["move_details"]["distance"] = distance
-                        st.success(f"The distance between {st.session_state['move_details']['origin']} and {destination} is {distance} miles.")
-                st.session_state["conversation_step"] = 3  # Proceed to next step
-            else:
-                st.error("Please provide your destination.")
-    elif st.session_state["conversation_step"] == 3:
-        st.write("**Bot:** May I know your name?")
-        name = st.text_input("Enter your name:")
-        if st.button("Next"):
-            if name:
-                st.session_state["move_details"]["name"] = name
-                st.session_state["conversation_step"] = 4  # Ask for contact number
-            else:
-                st.error("Please provide your name.")
-    elif st.session_state["conversation_step"] == 4:
-        st.write(f"**Bot:** Thanks, {st.session_state['move_details']['name']}! Can I have your contact number?")
-        contact_no = st.text_input("Enter your contact number:")
-        if st.button("Next"):
-            if contact_no:
-                st.session_state["move_details"]["contact_no"] = contact_no
-                st.session_state["conversation_step"] = 5  # Proceed to move date
-            else:
-                st.error("Please provide your contact number.")
-    elif st.session_state["conversation_step"] == 5:
-        st.write("**Bot:** When do you want to move?")
-        move_date = st.date_input("Select your moving date:", min_value=datetime.today())
-        if st.button("Next"):
-            st.session_state["move_details"]["date"] = move_date
-            st.session_state["conversation_step"] = 6  # Proceed to move size
-    elif st.session_state["conversation_step"] == 6:
-        st.write("**Bot:** What is your move size?")
-        move_size = st.selectbox(
-            "Select your move size:",
-            options=["Studio Apartment", "1-Bedroom", "2-Bedroom", "3-Bedroom", "4-Bedroom", "4+ Bedrooms", "Office", "Car"]
-        )
-        if st.button("Next"):
-            st.session_state["move_details"]["move_size"] = move_size
-            st.session_state["conversation_step"] = 7  # Proceed to additional services
-    elif st.session_state["conversation_step"] == 7:
-        st.write("**Bot:** Do you want any additional services?")
-        packing = st.checkbox("Packing")
-        storage = st.checkbox("Storage")
-        if st.button("Get Estimate"):
-            st.session_state["move_details"]["additional_services"] = []
-            if packing:
-                st.session_state["move_details"]["additional_services"].append("packing")
-            if storage:
-                st.session_state["move_details"]["additional_services"].append("storage")
-            st.session_state["conversation_step"] = 8  # Proceed to estimate
-    elif st.session_state["conversation_step"] == 8:
-        st.write("**Bot:** Let me calculate the estimated cost of your move...")
+elif st.session_state["conversation_step"] == 2:
+    st.write("**Bot:** Where are you moving to?")
+    destination = st.text_input("Enter your destination:", key="destination_input")
+    if st.button("Next", key="destination_next") or destination:
+        if destination:
+            # Save user input to chat history
+            st.session_state["chat_history"].append({"sender": "user", "content": destination})
+            st.session_state["move_details"]["destination"] = destination
+            st.session_state["conversation_step"] = 3  # Proceed to name step
+            st.rerun()
 
-        # Prepare API payload
-        move_details = st.session_state["move_details"]
-        payload = {
-            "chat_id": st.session_state["chat_id"],
-            "origin": move_details["origin"],
-            "destination": move_details["destination"],
-            "move_size": move_details["move_size"],
-            "additional_services": move_details["additional_services"],
-            "username": move_details["name"],  # Pass username
-            "contact_no": move_details["contact_no"],  # Pass contact number
-            "move_date": str(move_details["date"])  # Pass moving date
-        }
+        else:
+            st.error("Please provide your destination.")
 
-        # Fetch cost estimate from API
-        try:
-            response = requests.post(f"{api_url}/estimate_cost", json=payload)
-            response.raise_for_status()
-            data = response.json()
-            estimated_cost = data.get("estimated_cost", "No estimate available.")
+elif st.session_state["conversation_step"] == 3:
+    st.write("**Bot:** May I know your name?")
+    name = st.text_input("Enter your name:", key="name_input")
+    if st.button("Next", key="name_next") or name:
+        if name:
+            # Save user input to chat history
+            st.session_state["chat_history"].append({"sender": "user", "content": name})
+            st.session_state["move_details"]["name"] = name
+            st.session_state["conversation_step"] = 4  # Proceed to contact number step
+            st.rerun()
 
-        # Display the cost prominently
-            st.markdown(
-                f"""
-                <div style="text-align: center; font-size: 1.5em; margin-top: 20px; margin-bottom: 20px; color: #4CAF50;">
-                    <b>Bot:</b> The estimated cost of your move is: <b style="color: #E91E63;">{estimated_cost}</b>
-                </div>
-                """,
-                unsafe_allow_html=True
+        else:
+            st.error("Please provide your name.")
+
+elif st.session_state["conversation_step"] == 4:
+    st.write(f"**Bot:** Thanks, {st.session_state['move_details']['name']}! Can I have your contact number?")
+    contact_no = st.text_input("Enter your contact number:", key="contact_no_input")
+    if st.button("Next", key="contact_no_next") or contact_no:
+        if contact_no:
+            # Save user input to chat history
+            st.session_state["chat_history"].append({"sender": "user", "content": contact_no})
+            st.session_state["move_details"]["contact_no"] = contact_no
+            st.session_state["conversation_step"] = 5  # Proceed to move date step
+            st.rerun()
+
+        else:
+            st.error("Please provide your contact number.")
+
+elif st.session_state["conversation_step"] == 5:
+    st.write("**Bot:** When do you want to move?")
+    move_date = st.date_input("Select your moving date:", min_value=datetime.today(), key="move_date_input")
+    if st.button("Next", key="move_date_next"):
+        # Save user date selection to chat history (as a string)
+        user_date_str = str(move_date)
+        st.session_state["chat_history"].append({"sender": "user", "content": user_date_str})
+        st.session_state["move_details"]["date"] = move_date
+        st.session_state["conversation_step"] = 6  # Proceed to move size step
+        st.rerun()
+
+
+elif st.session_state["conversation_step"] == 6:
+    st.write("**Bot:** What is your move size?")
+    move_size = st.selectbox(
+        "Select your move size:",
+        options=["Studio Apartment", "1-Bedroom", "2-Bedroom", "3-Bedroom", "4-Bedroom", "4+ Bedrooms", "Office", "Car"],
+        key="move_size_input"
+    )
+    if st.button("Next", key="move_size_next"):
+        # Save user selection to chat history
+        st.session_state["chat_history"].append({"sender": "user", "content": move_size})
+        st.session_state["move_details"]["move_size"] = move_size
+        st.session_state["conversation_step"] = 7  # Proceed to additional services
+        st.rerun()
+
+
+elif st.session_state["conversation_step"] == 7:
+    st.write("**Bot:** Do you want any additional services?")
+    packing = st.checkbox("Packing", key="packing_checkbox")
+    storage = st.checkbox("Storage", key="storage_checkbox")
+    if st.button("Get Estimate", key="additional_services_next"):
+        chosen_services = []
+        if packing:
+            chosen_services.append("packing")
+        if storage:
+            chosen_services.append("storage")
+
+        # Save user checkbox inputs to chat history in a readable format
+        if len(chosen_services) == 0:
+            st.session_state["chat_history"].append({"sender": "user", "content": "No additional services selected"})
+        else:
+            st.session_state["chat_history"].append(
+                {"sender": "user", "content": f"Additional services: {', '.join(chosen_services)}"}
             )
-        except requests.exceptions.RequestException as e:
-            st.error(f"Error fetching cost estimate: {e}")
+
+        st.session_state["move_details"]["additional_services"] = chosen_services
+        st.session_state["conversation_step"] = 8  # Proceed to estimate
+        st.rerun()
+
+
+elif st.session_state["conversation_step"] == 8:
+    st.write("**Bot:** Let me calculate the estimated cost of your move...")
+    move_details = st.session_state["move_details"]
+    payload = {
+        "chat_id": st.session_state["chat_id"],
+        "origin": move_details["origin"],
+        "destination": move_details["destination"],
+        "move_size": move_details["move_size"],
+        "additional_services": move_details["additional_services"],
+        "username": move_details["name"],
+        "contact_no": move_details["contact_no"],
+        "move_date": str(move_details["date"])
+    }
+    try:
+        response = requests.post(f"{api_url}/estimate_cost", json=payload)
+        response.raise_for_status()
+        data = response.json()
+        estimated_cost = data.get("estimated_cost", "No estimate available.")
+        cost_msg = f"The estimated cost of your move is: {estimated_cost}"
+        
+        # Append to chat history
+        st.session_state["chat_history"].append({"sender": "assistant", "content": cost_msg})
+        
+        st.markdown(
+            f"""
+            <div style="text-align: center; font-size: 1.5em; margin-top: 20px; margin-bottom: 20px; color: #4CAF50;">
+                <b>Bot:</b> The estimated cost of your move is: <b style="color: #E91E63;">{estimated_cost}</b>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error fetching cost estimate: {e}")
