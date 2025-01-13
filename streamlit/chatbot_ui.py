@@ -261,35 +261,35 @@ elif st.session_state["conversation_step"] == 2:
         else:
             st.error("Please provide your destination.")
 
+# elif st.session_state["conversation_step"] == 3:
+#     st.write("**Bot:** May I know your name?")
+#     name = st.text_input("Enter your name:", key="name_input")
+#     if st.button("Next", key="name_next") or name:
+#         if name:
+#             # Save user input to chat history
+#             st.session_state["chat_history"].append({"sender": "user", "content": name})
+#             st.session_state["move_details"]["name"] = name
+#             st.session_state["conversation_step"] = 4  # Proceed to contact number step
+#             st.rerun()
+
+#         else:
+#             st.error("Please provide your name.")
+
+# elif st.session_state["conversation_step"] == 4:
+#     st.write(f"**Bot:** Thanks, {st.session_state['move_details']['name']}! Can I have your contact number?")
+#     contact_no = st.text_input("Enter your contact number:", key="contact_no_input")
+#     if st.button("Next", key="contact_no_next") or contact_no:
+#         if contact_no:
+#             # Save user input to chat history
+#             st.session_state["chat_history"].append({"sender": "user", "content": contact_no})
+#             st.session_state["move_details"]["contact_no"] = contact_no
+#             st.session_state["conversation_step"] = 5  # Proceed to move date step
+#             st.rerun()
+
+#         else:
+#             st.error("Please provide your contact number.")
+
 elif st.session_state["conversation_step"] == 3:
-    st.write("**Bot:** May I know your name?")
-    name = st.text_input("Enter your name:", key="name_input")
-    if st.button("Next", key="name_next") or name:
-        if name:
-            # Save user input to chat history
-            st.session_state["chat_history"].append({"sender": "user", "content": name})
-            st.session_state["move_details"]["name"] = name
-            st.session_state["conversation_step"] = 4  # Proceed to contact number step
-            st.rerun()
-
-        else:
-            st.error("Please provide your name.")
-
-elif st.session_state["conversation_step"] == 4:
-    st.write(f"**Bot:** Thanks, {st.session_state['move_details']['name']}! Can I have your contact number?")
-    contact_no = st.text_input("Enter your contact number:", key="contact_no_input")
-    if st.button("Next", key="contact_no_next") or contact_no:
-        if contact_no:
-            # Save user input to chat history
-            st.session_state["chat_history"].append({"sender": "user", "content": contact_no})
-            st.session_state["move_details"]["contact_no"] = contact_no
-            st.session_state["conversation_step"] = 5  # Proceed to move date step
-            st.rerun()
-
-        else:
-            st.error("Please provide your contact number.")
-
-elif st.session_state["conversation_step"] == 5:
     st.write("**Bot:** When do you want to move?")
     move_date = st.date_input("Select your moving date:", min_value=datetime.today(), key="move_date_input")
     if st.button("Next", key="move_date_next"):
@@ -297,11 +297,11 @@ elif st.session_state["conversation_step"] == 5:
         user_date_str = str(move_date)
         st.session_state["chat_history"].append({"sender": "user", "content": user_date_str})
         st.session_state["move_details"]["date"] = move_date
-        st.session_state["conversation_step"] = 6  # Proceed to move size step
+        st.session_state["conversation_step"] = 4  # Proceed to move size step
         st.rerun()
 
 
-elif st.session_state["conversation_step"] == 6:
+elif st.session_state["conversation_step"] == 4:
     st.write("**Bot:** What is your move size?")
     move_size = st.selectbox(
         "Select your move size:",
@@ -312,11 +312,11 @@ elif st.session_state["conversation_step"] == 6:
         # Save user selection to chat history
         st.session_state["chat_history"].append({"sender": "user", "content": move_size})
         st.session_state["move_details"]["move_size"] = move_size
-        st.session_state["conversation_step"] = 7  # Proceed to additional services
+        st.session_state["conversation_step"] = 5  # Proceed to additional services
         st.rerun()
 
 
-elif st.session_state["conversation_step"] == 7:
+elif st.session_state["conversation_step"] == 5:
     st.write("**Bot:** Do you want any additional services?")
     packing = st.checkbox("Packing", key="packing_checkbox")
     storage = st.checkbox("Storage", key="storage_checkbox")
@@ -336,11 +336,11 @@ elif st.session_state["conversation_step"] == 7:
             )
 
         st.session_state["move_details"]["additional_services"] = chosen_services
-        st.session_state["conversation_step"] = 8  # Proceed to estimate
+        st.session_state["conversation_step"] = 6  # Proceed to estimate
         st.rerun()
 
 
-elif st.session_state["conversation_step"] == 8:
+elif st.session_state["conversation_step"] == 6:
     st.write("**Bot:** Let me calculate the estimated cost of your move...")
     move_details = st.session_state["move_details"]
     payload = {
