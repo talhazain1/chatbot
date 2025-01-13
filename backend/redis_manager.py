@@ -70,4 +70,18 @@ class RedisManager:
             "additional_services": ", ".join(move_details.get("additional_services", [])),
             "estimated_cost": estimated_cost
         })
+    def update_context(self, chat_id, key, value):
+        """
+        Update a specific context key for the given chat session.
+        """
+        chat_key = f"chat:{chat_id}"
+        self.client.hset(chat_key, key, value)
+
+    def get_context(self, chat_id, key):
+        """
+        Retrieve a specific context key for the given chat session.
+        """
+        chat_key = f"chat:{chat_id}"
+        return self.client.hget(chat_key, key)
+
 
