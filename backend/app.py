@@ -49,8 +49,8 @@ def estimate_cost():
     destination = data.get("destination")
     move_size = data.get("move_size")
     additional_services = data.get("additional_services", [])
-    username = data.get("username", "Unknown")
-    contact_no = data.get("contact_no", "Unknown")
+    # username = data.get("username", "Unknown")
+    # contact_no = data.get("contact_no", "Unknown")
     move_date = data.get("move_date", "Unknown")
 
     if not (origin and destination and move_size):
@@ -65,8 +65,8 @@ def estimate_cost():
 
     # Store all details in Redis
     move_details = {
-        "name": username,
-        "contact_no": contact_no,
+        # "name": username,
+        # "contact_no": contact_no,
         "origin": origin,
         "destination": destination,
         "date": move_date,
