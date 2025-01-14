@@ -32,7 +32,7 @@ if "chat_history" not in st.session_state:
     st.session_state["chat_history"] = []
 
 # Define the API URL
-api_url = "https://3c03-39-37-133-73.ngrok-free.app"
+api_url = "https://aac7-39-37-170-13.ngrok-free.app"
 
 # Set Streamlit page configuration
 st.set_page_config(page_title="Chatbot - Move Planner", page_icon="🤖", layout="wide")
